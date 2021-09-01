@@ -1,6 +1,8 @@
 package weecache
 
 import (
+	"fmt"
+	"log"
 	"sync"
 )
 
@@ -45,4 +47,33 @@ func GetGroup(name string) *Group {
 	g := groups[name]
 	mu.RUnlock()
 	return g
+}
+
+func (g *Group) Get(key string) (ByteView, error) {
+	if key == "" {
+		return ByteView{}, fmt.Errorf("key is required")
+	}
+	if value, ok := g.mainCache.Get(key); ok {
+		log.Println("[WeeCache hit!]")
+		return value, nil
+	}
+	return g.load(key)
+}
+
+func (g *Group) load(key string) (value ByteView, err error) {
+	return g.Getlocal(key)
+}
+
+func (g *Group) Getlocal(key string) (ByteView, error) {
+	bytes, err := g.getter.Get(key)
+	if err != nil {
+		return ByteView{}, err
+	}
+	value := ByteView{b: cloneBytes(bytes)}
+	g.populateCache(key, value)
+	return value, err
+}
+
+func (g *Group) populateCache(key string, value ByteView) {
+	g.mainCache.Add(key, value)
 }
