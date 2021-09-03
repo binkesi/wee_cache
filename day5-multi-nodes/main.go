@@ -1,6 +1,7 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"log"
 	"multi-nodes/weecache"
@@ -51,4 +52,25 @@ func startAPIServer(apiAddr string, wee *weecache.Group) {
 func main() {
 	var api bool
 	var port int
+	flag.IntVar(&port, "port", 8001, "Geecache server port")
+	flag.BoolVar(&api, "api", false, "Start a api server?")
+	flag.Parse()
+
+	apiAddr := "http://localhost:9999"
+
+	addrMap := map[int]string{
+		8001: "http://localhost:8001",
+		8002: "http://localhost:8002",
+		8003: "http://localhost:8003",
+	}
+
+	var addrs []string
+	for _, v := range addrMap {
+		addrs = append(addrs, v)
+	}
+	wee := createGroup()
+	if api {
+		go startAPIServer(apiAddr, wee)
+	}
+	startCacheServer(addrMap[port], []string(addrs), wee)
 }
