@@ -22,3 +22,7 @@ func createGroup() *weecache.Group {
 			return nil, fmt.Errorf("%s not exist", key)
 		}))
 }
+
+func startCacheServer(addr string, addrs []string, wee *weecache.Group) {
+
+}
