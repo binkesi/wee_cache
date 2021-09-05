@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"proto-buf/weecache/singleflight"
+	pb "proto-buf/weecache/wecachepb"
 	"sync"
 )
 
@@ -72,11 +73,16 @@ func (g *Group) Get(key string) (ByteView, error) {
 }
 
 func (g *Group) getFromPeer(peer PeerGetter, key string) (ByteView, error) {
-	bytes, err := peer.Get(g.name, key)
+	req := &pb.Request{
+		Group: g.name,
+		Key:   key,
+	}
+	res := &pb.Response{}
+	err := peer.Get(req, res)
 	if err != nil {
 		return ByteView{}, err
 	}
-	return ByteView{b: bytes}, nil
+	return ByteView{b: res.Value}, nil
 }
 
 func (g *Group) load(key string) (value ByteView, err error) {
